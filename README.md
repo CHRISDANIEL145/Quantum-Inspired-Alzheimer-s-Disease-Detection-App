@@ -7,6 +7,8 @@
 
 An advanced deep learning web application for early detection of Alzheimer's Disease from brain MRI scans. This project leverages a VGG16-based convolutional neural network to classify brain scans into four stages of cognitive decline with high accuracy.
 
+##Application link:"https://huggingface.co/spaces/Danielchris145/alzheimers-detection"
+
 ![NeuroScan AI Interface](static/background.png)
 
 ---

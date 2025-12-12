@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prediction Result - Quantum Vision</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Prediction Result: {{ prediction }}</h1>
+            <h3>Confidence: {{ '%.2f' % confidence }}%</h3>
+        </header>
+
+        <div class="chatbot-container">
+            <div id="chatbot" class="chatbot">
+                <!-- Bot messages and user options will appear here -->
+            </div>
+            <div class="chatbot-buttons">
+                <button class="chat-btn" data-topic="overview">Overview</button>
+                <button class="chat-btn" data-topic="symptoms">Symptoms</button>
+                <button class="chat-btn" data-topic="causes">Causes</button>
+                <button class="chat-btn" data-topic="diagnosis">Diagnosis</button>
+                <button class="chat-btn" data-topic="treatments">Treatments</button>
+                <button class="chat-btn" data-topic="clinical_trials">Clinical Trials</button>
+            </div>
+        </div>
+
+        <footer>
+            <p class="disclaimer">Disclaimer: This tool is for educational purposes only and is not a substitute for professional medical advice. Consult a qualified healthcare provider for any health concerns.</p>
+        </footer>
+    </div>
+
+    <script>
+        const details = {{ details | tojson | safe }};
+        const chatbot = document.getElementById('chatbot');
+        const buttons = document.querySelectorAll('.chat-btn');
+
+        // Add a message from bot
+        function botMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('bot-msg');
+            msgDiv.textContent = text;
+            chatbot.appendChild(msgDiv);
+            chatbot.scrollTop = chatbot.scrollHeight;
+        }
+
+        // Add a message from user (button click)
+        function userMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('user-msg');
+            msgDiv.textContent = text;
+            chatbot.appendChild(msgDiv);
+            chatbot.scrollTop = chatbot.scrollHeight;
+        }
+
+        // Handle button clicks to display content
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const topic = button.getAttribute('data-topic');
+                userMessage(button.textContent);
+                const response = details[topic];
+                if (response) {
+                    botMessage(response);
+                } else {
+                    botMessage('Information not available.');
+                }
+            });
+        });
+
+        // On page load, show initial overview
+        window.onload = () => {
+            botMessage('Q-AIssist:');
+            botMessage(details['overview'] || 'Overview not available.');
+        };
+    </script>
+</body>
+</html>

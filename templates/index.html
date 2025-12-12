@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NeuroScan AI - Alzheimer's Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neural: {
+                            50: '#e6fff9',
+                            100: '#b3ffed',
+                            200: '#80ffe0',
+                            300: '#4dffd4',
+                            400: '#1affc7',
+                            500: '#00e6ac',
+                            600: '#00b386',
+                            700: '#008060',
+                            800: '#004d3a',
+                            900: '#001a14',
+                        },
+                        synapse: {
+                            50: '#f5f0ff',
+                            100: '#ebe0ff',
+                            200: '#d6c2ff',
+                            300: '#c2a3ff',
+                            400: '#ad85ff',
+                            500: '#9966ff',
+                            600: '#7a52cc',
+                            700: '#5c3d99',
+                            800: '#3d2966',
+                            900: '#1f1433',
+                        },
+                        void: {
+                            950: '#030308',
+                            900: '#07070f',
+                            800: '#0d0d1a',
+                            700: '#141425',
+                            600: '#1a1a30',
+                            500: '#21213b',
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'monospace'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        
+        body {
+            background: radial-gradient(ellipse at top, #0d0d1a 0%, #030308 50%, #000 100%);
+            min-height: 100vh;
+        }
+
+        /* Animated background grid */
+        .neural-grid {
+            background-image: 
+                linear-gradient(rgba(0, 230, 172, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 230, 172, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 60px 60px; }
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(0, 230, 172, 0.6);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(0, 230, 172, 0.8);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+            50% { transform: translateY(-100px) translateX(20px); opacity: 1; }
+        }
+
+        /* Glass morphism card */
+        .glass-card {
+            background: linear-gradient(135deg, rgba(13, 13, 26, 0.9) 0%, rgba(20, 20, 37, 0.8) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 230, 172, 0.15);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* Glowing border animation */
+        .glow-border {
+            position: relative;
+        }
+        .glow-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, #00e6ac, #9966ff, #00e6ac, #9966ff);
+            background-size: 400% 400%;
+            border-radius: inherit;
+            z-index: -1;
+            animation: borderGlow 6s ease infinite;
+            opacity: 0.7;
+        }
+        .glow-border::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: inherit;
+            border-radius: inherit;
+            z-index: -1;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Upload zone styles */
+        .upload-zone {
+            background: linear-gradient(135deg, rgba(0, 230, 172, 0.05) 0%, rgba(153, 102, 255, 0.05) 100%);
+            border: 2px dashed rgba(0, 230, 172, 0.4);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: rgba(153, 102, 255, 0.8);
+            background: linear-gradient(135deg, rgba(0, 230, 172, 0.1) 0%, rgba(153, 102, 255, 0.1) 100%);
+            box-shadow: 0 0 40px rgba(0, 230, 172, 0.2), inset 0 0 40px rgba(153, 102, 255, 0.1);
+        }
+
+        /* Brain scan animation */
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #00e6ac, transparent);
+            animation: scanMove 2.5s ease-in-out infinite;
+            opacity: 0;
+        }
+
+        .upload-zone:hover .scan-line {
+            opacity: 1;
+        }
+
+        @keyframes scanMove {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Primary button */
+        .btn-primary {
+            background: linear-gradient(135deg, #00e6ac 0%, #9966ff 100%);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 40px rgba(0, 230, 172, 0.3);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 50px rgba(0, 230, 172, 0.4), 0 0 30px rgba(153, 102, 255, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Brain icon pulse */
+        .brain-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0, 230, 172, 0.5)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(0, 230, 172, 0.8)); }
+        }
+
+        /* Feature cards */
+        .feature-card {
+            background: rgba(13, 13, 26, 0.6);
+            border: 1px solid rgba(0, 230, 172, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(0, 230, 172, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Preview image */
+        .preview-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-container img {
+            transition: transform 0.5s ease;
+        }
+
+        .preview-container:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid rgba(0, 230, 172, 0.1);
+            border-top-color: #00e6ac;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0d0d1a; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(#00e6ac, #9966ff); border-radius: 4px; }
+    </style>
+</head>
+<body class="font-inter text-white overflow-x-hidden">
+    <!-- Background Effects -->
+    <div class="fixed inset-0 neural-grid pointer-events-none"></div>
+    <div class="fixed inset-0 pointer-events-none">
+        <div class="particle" style="left: 10%; top: 20%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; top: 60%; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 70%; top: 30%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 80%; top: 70%; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 50%; top: 80%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 30%; top: 40%; animation-delay: 5s;"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative min-h-screen flex flex-col">
+
+        <!-- Header -->
+        <header class="py-6 px-4 sm:px-8">
+            <nav class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-neural-500 to-synapse-500 flex items-center justify-center brain-pulse">
+                        <span class="material-icons-round text-white text-2xl">psychology</span>
+                    </div>
+                    <div>
+                        <h1 class="font-orbitron font-bold text-xl tracking-wider text-white">NEUROSCAN</h1>
+                        <p class="text-xs text-neural-400 tracking-widest">AI DIAGNOSTICS</p>
+                    </div>
+                </div>
+                <div class="hidden sm:flex items-center gap-6">
+                    <a href="#features" class="text-sm text-gray-400 hover:text-neural-400 transition-colors">Features</a>
+                    <a href="#about" class="text-sm text-gray-400 hover:text-neural-400 transition-colors">About</a>
+                    <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-void-700/50 border border-neural-500/20">
+                        <span class="w-2 h-2 rounded-full bg-neural-500 animate-pulse"></span>
+                        <span class="text-xs text-neural-400">Model Active</span>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Hero Section -->
+        <main class="flex-1 flex items-center justify-center px-4 py-8">
+            <div class="w-full max-w-5xl">
+                <!-- Title Section -->
+                <div class="text-center mb-12">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-synapse-500/10 border border-synapse-500/20 mb-6">
+                        <span class="material-icons-round text-synapse-400 text-sm">auto_awesome</span>
+                        <span class="text-xs text-synapse-300 tracking-wide">POWERED BY DEEP LEARNING</span>
+                    </div>
+                    <h2 class="font-orbitron text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+                        <span class="bg-gradient-to-r from-neural-400 via-neural-300 to-synapse-400 bg-clip-text text-transparent">
+                            Early Detection
+                        </span>
+                        <br />
+                        <span class="text-white">for Alzheimer's Disease</span>
+                    </h2>
+                    <p class="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+                        Upload a brain MRI scan and let our advanced neural network analyze it for signs of cognitive decline with clinical-grade accuracy.
+                    </p>
+                </div>
+
+                <!-- Upload Card -->
+                <div class="glass-card rounded-3xl p-8 sm:p-10 glow-border">
+                    <form action="/predict" method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <!-- Upload Zone -->
+                        <div class="upload-zone rounded-2xl p-8 sm:p-12 text-center cursor-pointer relative overflow-hidden" 
+                             id="dropZone" onclick="document.getElementById('fileInput').click()">
+                            <div class="scan-line"></div>
+                            
+                            <div id="uploadContent">
+                                <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-neural-500/20 to-synapse-500/20 flex items-center justify-center border border-neural-500/30">
+                                    <span class="material-icons-round text-4xl text-neural-400">cloud_upload</span>
+                                </div>
+                                <h3 class="font-orbitron text-xl font-semibold text-white mb-2">Upload Brain Scan</h3>
+                                <p class="text-gray-400 mb-4">Drag & drop your MRI image here or click to browse</p>
+                                <div class="flex items-center justify-center gap-4 text-xs text-gray-500">
+                                    <span class="flex items-center gap-1">
+                                        <span class="material-icons-round text-sm">image</span>
+                                        JPG, PNG
+                                    </span>
+                                    <span class="flex items-center gap-1">
+                                        <span class="material-icons-round text-sm">straighten</span>
+                                        Max 10MB
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Preview (hidden by default) -->
+                            <div id="previewContent" class="hidden">
+                                <div class="preview-container w-48 h-48 mx-auto mb-4 rounded-xl overflow-hidden border-2 border-neural-500/30">
+                                    <img id="previewImage" src="" alt="Preview" class="w-full h-full object-cover" />
+                                </div>
+                                <p id="fileName" class="text-neural-400 font-medium mb-2"></p>
+                                <button type="button" onclick="clearFile(event)" class="text-sm text-gray-400 hover:text-red-400 transition-colors flex items-center gap-1 mx-auto">
+                                    <span class="material-icons-round text-sm">close</span>
+                                    Remove
+                                </button>
+                            </div>
+
+                            <input type="file" name="image" id="fileInput" accept="image/*" class="hidden" onchange="handleFile(this)" />
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="submitBtn" disabled
+                                class="btn-primary w-full mt-8 py-4 px-8 rounded-xl font-orbitron font-semibold text-lg text-white flex items-center justify-center gap-3">
+                            <span class="material-icons-round">biotech</span>
+                            <span id="btnText">Analyze Scan</span>
+                            <div id="btnSpinner" class="spinner hidden"></div>
+                        </button>
+                    </form>
+
+                    <!-- Info Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+                        <div class="flex items-center gap-3 p-4 rounded-xl bg-void-700/30 border border-void-600/50">
+                            <span class="material-icons-round text-neural-400">verified</span>
+                            <div>
+                                <p class="text-sm font-medium text-white">95%+ Accuracy</p>
+                                <p class="text-xs text-gray-500">Validated Model</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 p-4 rounded-xl bg-void-700/30 border border-void-600/50">
+                            <span class="material-icons-round text-synapse-400">speed</span>
+                            <div>
+                                <p class="text-sm font-medium text-white">Instant Results</p>
+                                <p class="text-xs text-gray-500">Real-time Analysis</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 p-4 rounded-xl bg-void-700/30 border border-void-600/50">
+                            <span class="material-icons-round text-neural-400">lock</span>
+                            <div>
+                                <p class="text-sm font-medium text-white">Secure & Private</p>
+                                <p class="text-xs text-gray-500">Data Protected</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Features Section -->
+        <section id="features" class="py-16 px-4">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <h3 class="font-orbitron text-2xl sm:text-3xl font-bold text-white mb-4">How It Works</h3>
+                    <p class="text-gray-400 max-w-xl mx-auto">Our AI-powered system uses advanced deep learning to detect early signs of Alzheimer's disease from brain MRI scans.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="feature-card rounded-2xl p-6 text-center">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-neural-500/20 to-neural-600/20 flex items-center justify-center">
+                            <span class="material-icons-round text-3xl text-neural-400">upload_file</span>
+                        </div>
+                        <h4 class="font-orbitron font-semibold text-white mb-2">1. Upload Scan</h4>
+                        <p class="text-sm text-gray-400">Upload a brain MRI image in JPG or PNG format for analysis.</p>
+                    </div>
+                    <div class="feature-card rounded-2xl p-6 text-center">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-synapse-500/20 to-synapse-600/20 flex items-center justify-center">
+                            <span class="material-icons-round text-3xl text-synapse-400">memory</span>
+                        </div>
+                        <h4 class="font-orbitron font-semibold text-white mb-2">2. AI Analysis</h4>
+                        <p class="text-sm text-gray-400">Our VGG16-based neural network processes and analyzes the scan.</p>
+                    </div>
+                    <div class="feature-card rounded-2xl p-6 text-center">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-neural-500/20 to-synapse-500/20 flex items-center justify-center">
+                            <span class="material-icons-round text-3xl text-neural-300">assessment</span>
+                        </div>
+                        <h4 class="font-orbitron font-semibold text-white mb-2">3. Get Results</h4>
+                        <p class="text-sm text-gray-400">Receive detailed classification with confidence scores and insights.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-8 px-4 border-t border-void-600/30">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="material-icons-round text-neural-500">psychology</span>
+                        <span class="font-orbitron text-sm text-gray-400">NEUROSCAN AI</span>
+                    </div>
+                    <p class="text-xs text-gray-500 text-center">
+                        ⚠️ For educational purposes only. Not a substitute for professional medical diagnosis.
+                    </p>
+                    <p class="text-xs text-gray-600">© 2024 NeuroScan AI</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadContent = document.getElementById('uploadContent');
+        const previewContent = document.getElementById('previewContent');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const uploadForm = document.getElementById('uploadForm');
+
+        // Handle file selection
+        function handleFile(input) {
+            const file = input.files[0];
+            if (file) {
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Please upload a valid image file (JPG or PNG)');
+                    clearFile();
+                    return;
+                }
+
+                // Validate file size (10MB max)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('File size must be less than 10MB');
+                    clearFile();
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    fileName.textContent = file.name;
+                    uploadContent.classList.add('hidden');
+                    previewContent.classList.remove('hidden');
+                    submitBtn.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Clear file selection
+        function clearFile(event) {
+            if (event) event.stopPropagation();
+            fileInput.value = '';
+            previewImage.src = '';
+            fileName.textContent = '';
+            uploadContent.classList.remove('hidden');
+            previewContent.classList.add('hidden');
+            submitBtn.disabled = true;
+        }
+
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFile(fileInput);
+            }
+        });
+
+        // Form submission with loading state
+        uploadForm.addEventListener('submit', function(e) {
+            if (!fileInput.files[0]) {
+                e.preventDefault();
+                return;
+            }
+            submitBtn.disabled = true;
+            btnText.textContent = 'Analyzing...';
+            btnSpinner.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
